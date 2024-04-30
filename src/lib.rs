@@ -14,7 +14,6 @@ mod stdio;
 use crate::stdio::stdout;
 
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
-use wasm_bindgen_test::*;
 
 #[link(wasm_import_module = "env")]
 extern "C" {
