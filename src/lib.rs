@@ -11,9 +11,9 @@ mod byte_view;
 mod compat;
 mod index_pointer;
 mod stdio;
-use crate::stdio::stdout;
-
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
+use crate::index_pointer::IndexPointer;
+use crate::stdio::stdout;
 
 #[link(wasm_import_module = "env")]
 extern "C" {
@@ -96,6 +96,11 @@ pub extern "C" fn _start() -> () {
         Arc::new(block.block_hash().as_byte_array().to_vec()),
         Arc::new(data[4..].to_vec()),
     );
+    let ip = IndexPointer::from_keyword("test");
+    ip.set(Arc::new(vec![1, 2]));
+    ip.set_value::<u64>(200);
+    let val: u64 = ip.get_value();
+    println!("{:?} {:?}", ip.get(), val);
     println!(
         "{:x?}",
         get(Arc::new(block.block_hash().as_byte_array().to_vec()))
