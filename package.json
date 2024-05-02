@@ -6,7 +6,7 @@
   "author": "sandshrew",
   "license": "MIT",
   "scripts": {
-    "test": "wasm-pack build -q; ts-mocha --timeout 0 ./tests/**.spec.ts"
+    "test": "wasm-pack build ./ -- --quiet; ts-mocha --timeout 0 ./tests/**.spec.ts"
   },
   "devDependencies": {
     "@types/chai": "^4.3.14",

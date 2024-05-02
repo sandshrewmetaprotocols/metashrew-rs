@@ -1,6 +1,7 @@
 pub trait ByteView {
     fn from_bytes(v: Vec<u8>) -> Self;
     fn to_bytes(v: Self) -> Vec<u8>;
+    fn maximum() -> Self;
 }
 
 impl ByteView for u8 {
@@ -9,6 +10,9 @@ impl ByteView for u8 {
     }
     fn from_bytes(v: Vec<u8>) -> u8 {
         u8::from_le_bytes(v.as_slice().try_into().expect("incorrect length"))
+    }
+    fn maximum() -> u8 {
+        u8::MAX
     }
 }
 
@@ -19,6 +23,9 @@ impl ByteView for u16 {
     fn from_bytes(v: Vec<u8>) -> u16 {
         u16::from_le_bytes(v.as_slice().try_into().expect("incorrect length"))
     }
+    fn maximum() -> u16 {
+        u16::MAX
+    }
 }
 
 impl ByteView for u32 {
@@ -27,6 +34,9 @@ impl ByteView for u32 {
     }
     fn from_bytes(v: Vec<u8>) -> u32 {
         u32::from_le_bytes(v.as_slice().try_into().expect("incorrect length"))
+    }
+    fn maximum() -> u32 {
+        u32::MAX
     }
 }
 
@@ -37,6 +47,9 @@ impl ByteView for u64 {
     fn from_bytes(v: Vec<u8>) -> u64 {
         u64::from_le_bytes(v.as_slice().try_into().expect("incorrect length"))
     }
+    fn maximum() -> u64 {
+        u64::MAX
+    }
 }
 
 impl ByteView for u128 {
@@ -45,5 +58,8 @@ impl ByteView for u128 {
     }
     fn from_bytes(v: Vec<u8>) -> u128 {
         u128::from_le_bytes(v.as_slice().try_into().expect("incorrect length"))
+    }
+    fn maximum() -> u128 {
+        u128::MAX
     }
 }

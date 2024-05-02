@@ -7,6 +7,7 @@ use std::fmt::Write;
 use std::panic;
 use std::sync::Arc;
 
+mod bst;
 mod byte_view;
 mod compat;
 mod index_pointer;
@@ -96,11 +97,6 @@ pub extern "C" fn _start() -> () {
         Arc::new(block.block_hash().as_byte_array().to_vec()),
         Arc::new(data[4..].to_vec()),
     );
-    let ip = IndexPointer::from_keyword("test");
-    ip.set(Arc::new(vec![1, 2]));
-    ip.set_value::<u64>(200);
-    let val: u64 = ip.get_value();
-    println!("{:?} {:?}", ip.get(), val);
     println!(
         "{:x?}",
         get(Arc::new(block.block_hash().as_byte_array().to_vec()))

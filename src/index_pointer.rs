@@ -46,7 +46,7 @@ impl IndexPointer {
     pub fn length_key(&self) -> Self {
         self.keyword(&"/length".to_string())
     }
-    pub fn length(&self) -> u32 {
+    pub fn length<T: ByteView>(&self) -> T {
         self.length_key().get_value()
     }
 }
