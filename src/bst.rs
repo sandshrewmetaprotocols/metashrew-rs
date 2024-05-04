@@ -19,24 +19,50 @@ macro_rules! pass_down_binary_search {
     };
 }
 
+macro_rules! pass_down_higher {
+    ($word: tt, $for_highest: tt, $size: tt, $T: tt, $t2: tt) => {{
+        let low: $t2 = $T::try_into($T::from($word & $T::try_from($t2::MAX).unwrap())).unwrap();
+        let shr = $T::try_from(size_of::<$t2>() * 8).unwrap();
+        let high: $t2 = $T::try_into(
+            $T::try_from($T::try_from($word >> shr).unwrap() & $T::try_from($t2::MAX).unwrap())
+                .unwrap(),
+        )
+        .unwrap();
+        let zero = 0 as $t2;
+        let x = i32::from(i32::try_from(size_of::<$t2>()).unwrap() * 8);
+        pass_down_binary_search!(low, high, $for_highest, $size, zero, $t2, x, false)
+    }};
+}
+
 pub fn binary_search<T>(word: T, for_highest: bool, size: u8) -> i32
 where
     T: ByteView + Shr + BitAnd + Eq + PartialEq + Copy + Debug,
     T: From<<T as Shr>::Output>,
     T: From<<T as BitAnd>::Output>,
-    T: Into<u8> + Into<u16> + Into<u32> + Into<u64> + Into<u128>,
+    T: TryInto<u8> + TryInto<u16> + TryInto<u32> + Into<u64> + Into<u128>,
     T: From<u8> + TryFrom<usize> + TryFrom<u16> + TryFrom<u32> + TryFrom<u64> + TryFrom<u128>,
     <T as TryFrom<usize>>::Error: Debug,
+    <T as TryFrom<u16>>::Error: Debug,
+    <T as TryInto<u16>>::Error: Debug,
+    <T as TryFrom<u8>>::Error: Debug,
+    <T as TryFrom<u32>>::Error: Debug,
+    <T as TryInto<u8>>::Error: Debug,
+    <T as TryInto<u32>>::Error: Debug,
+    <T as TryInto<u64>>::Error: Debug,
+    <T as TryFrom<u64>>::Error: Debug,
 {
     match size {
+        128 => {
+            pass_down_higher!(word, for_highest, size, T, u64)
+        }
+        64 => {
+            pass_down_higher!(word, for_highest, size, T, u32)
+        }
+        32 => {
+            pass_down_higher!(word, for_highest, size, T, u16)
+        }
         16 => {
-            //
-            let low: u8 = T::into(T::from(word & T::from(u8::MAX)));
-            let shr = T::try_from(size_of::<u8>() * 8).unwrap();
-            let high: u8 = T::into(T::from(T::from(word >> shr) & T::from(u8::MAX)));
-            let zero = u8::from(0);
-            let x = i32::from(i32::try_from(size_of::<u8>()).unwrap() * 8);
-            pass_down_binary_search!(low, high, for_highest, size, zero, u8, x, false)
+            pass_down_higher!(word, for_highest, size, T, u8)
         }
         2 | 4 | 8 => {
             let rhs = if size > 4 { 0x0f } else { size - 1 };
