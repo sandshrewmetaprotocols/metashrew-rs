@@ -11,12 +11,12 @@ macro_rules! pass_down_binary_search {
             if $pass {
                 return 0;
             }
-            binary_search::<$t2>($high, $for_highest, $size / 2)
+            binary_search_inner::<$t2>($high, $for_highest, $size / 2)
         } else {
             if $pass {
                 return 1;
             }
-            $x + binary_search::<$t2>($low, $for_highest, $size / 2)
+            $x + binary_search_inner::<$t2>($low, $for_highest, $size / 2)
         }
     };
 }
@@ -36,13 +36,13 @@ macro_rules! pass_down_higher {
     }};
 }
 
-pub fn binary_search_u256(high: u128, low: u128, for_highest: bool) -> i32 {
+pub fn binary_search(high: u128, low: u128, for_highest: bool) -> i32 {
     let x = i32::try_from(size_of::<u128>() * 8).unwrap();
     let zero = u128::try_from(0).unwrap();
     pass_down_binary_search!(high, low, for_highest, 256, zero, u128, x, false)
 }
 
-pub fn binary_search<T>(word: T, for_highest: bool, size: u16) -> i32
+pub fn binary_search_inner<T>(word: T, for_highest: bool, size: u16) -> i32
 where
     T: ByteView + Shr + BitAnd + Eq + PartialEq + Copy + Debug,
     T: From<<T as Shr>::Output>,

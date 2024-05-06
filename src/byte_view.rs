@@ -63,3 +63,16 @@ impl ByteView for u128 {
         u128::MAX
     }
 }
+
+impl ByteView for usize {
+    fn to_bytes(v: usize) -> Vec<u8> {
+        Vec::<u8>::from(v.to_le_bytes())
+    }
+    fn from_bytes(v: Vec<u8>) -> usize {
+        usize::from_le_bytes(v.as_slice().try_into().expect("incorrect length"))
+    }
+
+    fn maximum() -> usize {
+        usize::MAX
+    }
+}

@@ -49,7 +49,22 @@ impl IndexPointer {
     pub fn length<T: ByteView>(&self) -> T {
         self.length_key().get_value()
     }
-    pub fn select_index(&self, index: u32) -> Self {
+    pub fn select_index(&self, index: u32) -> IndexPointer {
         self.keyword(&format!("/{}", index))
+    }
+
+    pub fn get_list(&self) -> Vec<Arc<Vec<u8>>> {
+        Vec::<u8>::with_capacity(self.length::<usize>())
+            .into_iter()
+            .enumerate()
+            .map(|(i, _x)| self.select_index(i as u32).get().clone())
+            .collect::<Vec<Arc<Vec<u8>>>>()
+    }
+    pub fn get_list_values<T: ByteView>(&self) -> Vec<T> {
+        Vec::<u8>::with_capacity(self.length::<usize>())
+            .into_iter()
+            .enumerate()
+            .map(|(i, _x)| self.select_index(i as u32).get_value::<T>())
+            .collect::<Vec<T>>()
     }
 }
