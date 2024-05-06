@@ -49,4 +49,7 @@ impl IndexPointer {
     pub fn length<T: ByteView>(&self) -> T {
         self.length_key().get_value()
     }
+    pub fn select_index(&self, index: u32) -> Self {
+        self.keyword(&format!("/{}", index))
+    }
 }

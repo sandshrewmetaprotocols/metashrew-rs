@@ -77,7 +77,7 @@ where
             let high = T::from(
                 T::from(word >> T::try_from(size / 2).unwrap()) & T::try_from(rhs).unwrap(),
             );
-            let low = T::from(word & T::try_from(size - 1).unwrap());
+            let low = T::from(word & T::try_from(rhs).unwrap());
             let zero = T::from(0);
             let condition = size == 2;
             let x = i32::from(size / 2);
