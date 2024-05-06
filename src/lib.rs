@@ -2,6 +2,7 @@ extern crate alloc;
 use bitcoin::blockdata::block::Block;
 use bitcoin::consensus::Decodable;
 use bitcoin::hashes::Hash;
+use ordinals::Rune;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::panic;
@@ -97,6 +98,7 @@ pub extern "C" fn _start() -> () {
         Arc::new(block.block_hash().as_byte_array().to_vec()),
         Arc::new(data[4..].to_vec()),
     );
+    let r = Rune(0);
     println!(
         "{:x?}",
         get(Arc::new(block.block_hash().as_byte_array().to_vec()))
