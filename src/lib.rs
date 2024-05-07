@@ -98,7 +98,24 @@ pub extern "C" fn _start() -> () {
         Arc::new(block.block_hash().as_byte_array().to_vec()),
         Arc::new(data[4..].to_vec()),
     );
-    let r = Rune(0);
+    println!(
+        "{:x?}",
+        get(Arc::new(block.block_hash().as_byte_array().to_vec()))
+    );
+    flush();
+}
+
+#[no_mangle]
+pub extern "C" fn _test() -> () {
+    initialize();
+    let data = input();
+    let mut reader = &data[4..];
+    let height = u32::from_le_bytes((&data[0..4]).try_into().unwrap());
+    let block = Block::consensus_decode(&mut reader).unwrap();
+    set(
+        Arc::new(block.block_hash().as_byte_array().to_vec()),
+        Arc::new(data[4..].to_vec()),
+    );
     println!(
         "{:x?}",
         get(Arc::new(block.block_hash().as_byte_array().to_vec()))

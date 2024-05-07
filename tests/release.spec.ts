@@ -22,7 +22,7 @@ describe("metashrew index", () => {
     );
     program.setBlockHeight(0);
     program.on("log", (v) => process.stdout.write(v));
-    await program.run('_start');
+    await program.run('_test');
     console.log(program.kv);
     // console.log(program.kv);
   });
