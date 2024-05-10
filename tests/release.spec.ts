@@ -1,7 +1,5 @@
 
-import { expect } from "chai";
 import fs from "fs-extra";
-import { EventEmitter } from "events";
 import { IndexerProgram } from "metashrew-test";
 import path from "path";
 

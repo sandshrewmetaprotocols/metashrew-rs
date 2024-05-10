@@ -1,9 +1,34 @@
 use crate::byte_view::ByteView;
+use crate::IndexPointer;
 use std::fmt::Debug;
 use std::mem::size_of;
 use std::ops::{BitAnd, Shr};
+use std::sync::Arc;
 
-pub struct BST {}
+pub struct BST<K> {
+    ptr: IndexPointer,
+    _val: K,
+}
+
+pub fn maskLowerThan(v: Arc<Vec<u8>>, position: u8) -> [u64; 4] {
+    let mut ar: [u64; 4] = [0, 0, 0, 0];
+    ar[0] = u64::from_le_bytes(v.clone().as_slice()[0..8].try_into().unwrap());
+    ar[1] = u64::from_le_bytes(v.clone().as_slice()[8..16].try_into().unwrap());
+    ar[2] = u64::from_le_bytes(v.clone().as_slice()[16..24].try_into().unwrap());
+    ar[3] = u64::from_le_bytes(v.clone().as_slice()[24..32].try_into().unwrap());
+
+    let bit_selected = position % 64;
+    let byte_selected = position / 64;
+
+    ar[byte_selected as usize] = ar[byte_selected as usize]
+        & u64::try_from(((1 << bit_selected) - 1) << (64 - bit_selected)).unwrap();
+
+    for i in byte_selected + 1..4 {
+        ar[i as usize] = 0;
+    }
+
+    ar
+}
 
 macro_rules! pass_down_binary_search {
     ($high: tt, $low: tt, $for_highest: tt, $size: tt, $zero: tt, $t2: tt, $x: tt, $pass: tt) => {
@@ -85,4 +110,32 @@ where
         }
         _ => 0,
     }
+}
+
+impl<K: ByteView + Sized> BST<K> {
+    pub fn new(ptr: IndexPointer) -> Self {
+        BST {
+            ptr,
+            _val: K::from_bytes(vec![0]),
+        }
+    }
+    pub fn mark_path(&self, key: K) {}
+    pub fn get_mask_pointer(&self, partial_key: Vec<u8>) -> IndexPointer {
+        self.ptr
+    }
+    pub fn unmark_path(&self, key: K) {}
+    fn _findBoundaryFromPartial(key_bytes: Vec<u8>, seek_higher: bool) -> K {
+        K::from_bytes(vec![0])
+    }
+    pub fn seek_lower(start: K) -> K {
+        K::from_bytes(vec![0])
+    }
+    pub fn seek_greater(start: K) -> K {
+        K::from_bytes(vec![0])
+    }
+    pub fn set(k: K, v: Vec<u8>) {}
+    pub fn get(k: K) -> Vec<u8> {
+        vec![0]
+    }
+    pub fn nullify(key: K) {}
 }

@@ -2,7 +2,6 @@ extern crate alloc;
 use bitcoin::blockdata::block::Block;
 use bitcoin::consensus::Decodable;
 use bitcoin::hashes::Hash;
-use ordinals::Rune;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::panic;
@@ -13,6 +12,7 @@ mod byte_view;
 mod compat;
 mod index_pointer;
 mod stdio;
+use crate::bst::BST;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
 use crate::index_pointer::IndexPointer;
 use crate::stdio::stdout;
@@ -111,6 +111,7 @@ pub extern "C" fn _test() -> () {
     let data = input();
     let mut reader = &data[4..];
     let height = u32::from_le_bytes((&data[0..4]).try_into().unwrap());
+    let bst = BST::<u8>::new(IndexPointer::from_keyword("test"));
     let block = Block::consensus_decode(&mut reader).unwrap();
     set(
         Arc::new(block.block_hash().as_byte_array().to_vec()),
