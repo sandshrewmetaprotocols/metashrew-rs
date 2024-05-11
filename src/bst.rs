@@ -11,7 +11,7 @@ pub struct BST<K> {
     _val: K,
 }
 
-pub fn maskLowerThan(v: Arc<Vec<u8>>, position: u8) -> [u64; 4] {
+pub fn maskLowerThan(v: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
     let mut ar: [u64; 4] = [0, 0, 0, 0];
     ar[0] = u64::from_le_bytes(v.clone().as_slice()[0..8].try_into().unwrap());
     ar[1] = u64::from_le_bytes(v.clone().as_slice()[8..16].try_into().unwrap());
@@ -28,10 +28,15 @@ pub fn maskLowerThan(v: Arc<Vec<u8>>, position: u8) -> [u64; 4] {
         ar[i as usize] = 0;
     }
 
-    ar
+    let _vec = ar
+        .into_iter()
+        .map(|v| v.to_le_bytes().to_vec())
+        .flatten()
+        .collect::<Vec<u8>>();
+    Arc::from(_vec)
 }
 
-pub fn maskGreaterThan(v: Arc<Vec<u8>>, position: u8) -> [u64; 4] {
+pub fn maskGreaterThan(v: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
     let mut ar: [u64; 4] = [0, 0, 0, 0];
     ar[0] = u64::from_le_bytes(v.clone().as_slice()[0..8].try_into().unwrap());
     ar[1] = u64::from_le_bytes(v.clone().as_slice()[8..16].try_into().unwrap());
@@ -48,7 +53,12 @@ pub fn maskGreaterThan(v: Arc<Vec<u8>>, position: u8) -> [u64; 4] {
         ar[i as usize] = 0;
     }
 
-    ar
+    let _vec = ar
+        .into_iter()
+        .map(|v| v.to_le_bytes().to_vec())
+        .flatten()
+        .collect::<Vec<u8>>();
+    Arc::from(_vec)
 }
 
 macro_rules! pass_down_binary_search {
@@ -80,6 +90,30 @@ macro_rules! pass_down_higher {
         let x = i32::from(i32::try_from(size_of::<$t2>()).unwrap() * 8);
         pass_down_binary_search!(high, low, $for_highest, $size, zero, $t2, x, false)
     }};
+}
+
+pub fn set_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
+    let byte_position = position / 8;
+    let bit_position = position % 8;
+    let mut vec_mask: Vec<u8> = Arc::try_unwrap(mask.clone()).unwrap();
+
+    let new_bit = u8::from(1) << (u8::from(7) - u8::try_from(bit_position).unwrap());
+
+    vec_mask[byte_position] = vec_mask[byte_position] | new_bit;
+
+    Arc::from(vec_mask)
+}
+
+pub fn unset_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
+    let byte_position = position / 8;
+    let bit_position = position % 8;
+    let mut vec_mask: Vec<u8> = Arc::try_unwrap(mask.clone()).unwrap();
+
+    let new_bit = u8::from(1) << (u8::from(7) - u8::try_from(bit_position).unwrap());
+
+    vec_mask[byte_position] = vec_mask[byte_position] & new_bit;
+
+    Arc::from(vec_mask)
 }
 
 pub fn binary_search(high: u128, low: u128, for_highest: bool) -> i32 {
