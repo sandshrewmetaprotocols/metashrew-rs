@@ -92,28 +92,32 @@ macro_rules! pass_down_higher {
     }};
 }
 
-pub fn set_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
+pub fn set_bit_u256(mask: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
     let byte_position = position / 8;
     let bit_position = position % 8;
     let mut vec_mask: Vec<u8> = Arc::try_unwrap(mask.clone()).unwrap();
 
-    let new_bit = u8::from(1) << (u8::from(7) - u8::try_from(bit_position).unwrap());
+    let new_bit = u8::from(1) << (u8::from(7) - bit_position);
 
-    vec_mask[byte_position] = vec_mask[byte_position] | new_bit;
+    vec_mask[byte_position as usize] = vec_mask[byte_position as usize] | new_bit;
 
     Arc::from(vec_mask)
 }
 
-pub fn unset_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
+pub fn unset_bit_u256(mask: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
     let byte_position = position / 8;
     let bit_position = position % 8;
     let mut vec_mask: Vec<u8> = Arc::try_unwrap(mask.clone()).unwrap();
 
-    let new_bit = u8::from(1) << (u8::from(7) - u8::try_from(bit_position).unwrap());
+    let new_bit = u8::from(1) << (u8::from(7) - bit_position);
 
-    vec_mask[byte_position] = vec_mask[byte_position] & new_bit;
+    vec_mask[byte_position as usize] = vec_mask[byte_position as usize] & new_bit;
 
     Arc::from(vec_mask)
+}
+
+pub fn is_set_u256(mask: Arc<Vec<u8>>, position: u8) -> bool {
+    false
 }
 
 pub fn binary_search(high: u128, low: u128, for_highest: bool) -> i32 {
@@ -167,18 +171,39 @@ where
     }
 }
 
-impl<K: ByteView + Sized> BST<K> {
+impl<K: ByteView + Sized + TryFrom<usize>> BST<K>
+where
+    <K as TryFrom<usize>>::Error: Debug,
+{
     pub fn new(ptr: IndexPointer) -> Self {
         BST {
             ptr,
             _val: K::from_bytes(vec![0]),
         }
     }
-    pub fn mark_path(&self, key: K) {}
     pub fn get_mask_pointer(&self, partial_key: Vec<u8>) -> IndexPointer {
-        self.ptr.clone()
+        self.ptr.select(&partial_key).keyword("/mask")
     }
-    pub fn unmark_path(&self, key: K) {}
+    pub fn mark_path(&self, key: K) {
+        let key_bytes = ByteView::to_bytes(key);
+        for i in 0..size_of::<K>() {
+            let partial_key = ByteView::to_bytes(K::try_from(i).unwrap());
+            let ptr = self.get_mask_pointer(partial_key);
+            let mask = ptr.get();
+            let byte = key_bytes[i];
+            if !is_set_u256(mask.clone(), byte) {
+                ptr.set(set_bit_u256(mask, byte));
+            }
+        }
+    }
+    pub fn unmark_path(&self, key: K) {
+        let key_bytes = ByteView::to_bytes(key);
+        for i in size_of::<K>() as i32..0 as i32 {
+            let partial_key = ByteView::to_bytes(i as usize);
+            let ptr = self.get_mask_pointer(partial_key);
+            let mask = ptr.get();
+        }
+    }
     fn _findBoundaryFromPartial(key_bytes: Vec<u8>, seek_higher: bool) -> K {
         K::from_bytes(vec![0])
     }

@@ -27,9 +27,9 @@ impl IndexPointer {
         key.extend(word);
         return IndexPointer::wrap(&key);
     }
-    pub fn keyword(&self, word: &String) -> IndexPointer {
+    pub fn keyword(&self, word: &str) -> IndexPointer {
         let mut key = (*self.unwrap()).clone();
-        key.extend(&word.clone().into_bytes());
+        key.extend(word.to_string().into_bytes());
         return IndexPointer::wrap(&key);
     }
 
