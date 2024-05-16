@@ -4,6 +4,15 @@ pub trait ByteView {
     fn maximum() -> Self;
 }
 
+pub fn shrink_back(b: Vec<u8>, v: usize) -> Vec<u8> {
+    let mut _vec = b.clone();
+    if b.len() >= v {
+        _vec.clear()
+    }
+    _vec.drain(0..v);
+    _vec
+}
+
 impl ByteView for u8 {
     fn to_bytes(v: u8) -> Vec<u8> {
         Vec::<u8>::from(v.to_le_bytes())

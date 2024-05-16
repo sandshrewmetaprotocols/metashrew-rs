@@ -1,9 +1,11 @@
-use crate::byte_view::ByteView;
+use crate::byte_view::{shrink_back, ByteView};
 use crate::IndexPointer;
 use std::fmt::Debug;
 use std::mem::size_of;
 use std::ops::{BitAnd, Shr};
 use std::sync::Arc;
+
+//TODO: redo byteLen parts
 
 #[derive(Debug, Clone)]
 pub struct BST<K> {
@@ -204,10 +206,42 @@ where
             let mask = ptr.get();
         }
     }
-    fn _findBoundaryFromPartial(key_bytes: Vec<u8>, seek_higher: bool) -> K {
+    fn _find_boundary_from_partial(&self, key_bytes: Vec<u8>, seek_higher: bool) -> K {
         K::from_bytes(vec![0])
     }
-    pub fn seek_lower(start: K) -> K {
+    pub fn seek_lower(&self, start: K) -> K {
+        let mut partial_key = ByteView::to_bytes(start);
+        loop {
+            let this_key = shrink_back(partial_key.clone(), 1);
+            let mask = self.get_mask_pointer(this_key.clone()).get();
+            if mask.len() > 0 {
+                let derived_mask = maskLowerThan(mask, partial_key[this_key.len()]);
+                self.get_mask_pointer(this_key.clone())
+                    .set(derived_mask.clone());
+                let derived_mask_value = Arc::try_unwrap(derived_mask).unwrap();
+                let high = u128::from_le_bytes(
+                    derived_mask_value.clone().as_slice()[0..16]
+                        .try_into()
+                        .unwrap(),
+                );
+                let low = u128::from_le_bytes(
+                    derived_mask_value.clone().as_slice()[16..32]
+                        .try_into()
+                        .unwrap(),
+                );
+                let symbol = binary_search(high, low, false);
+                if symbol != -1 {
+                    let mut new_key = this_key.clone();
+                    new_key.push(symbol.try_into().unwrap());
+                    return self._find_boundary_from_partial(new_key, false);
+                }
+            }
+
+            partial_key = this_key;
+            if partial_key.len() == 0 {
+                break;
+            }
+        }
         K::from_bytes(vec![0])
     }
     pub fn seek_greater(start: K) -> K {
