@@ -94,31 +94,31 @@ macro_rules! pass_down_higher {
     }};
 }
 
-pub fn set_bit_u256(mask: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
+pub fn set_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
     let byte_position = position / 8;
-    let bit_position = position % 8;
+    let bit_position = u8::try_from(position % 8).unwrap();
     let mut vec_mask: Vec<u8> = Arc::try_unwrap(mask.clone()).unwrap();
 
     let new_bit = u8::from(1) << (u8::from(7) - bit_position);
 
-    vec_mask[byte_position as usize] = vec_mask[byte_position as usize] | new_bit;
+    vec_mask[byte_position] = vec_mask[byte_position] | new_bit;
 
     Arc::from(vec_mask)
 }
 
-pub fn unset_bit_u256(mask: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
+pub fn unset_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
     let byte_position = position / 8;
-    let bit_position = position % 8;
+    let bit_position = u8::try_from(position % 8).unwrap();
     let mut vec_mask: Vec<u8> = Arc::try_unwrap(mask.clone()).unwrap();
 
-    let new_bit = u8::from(1) << (u8::from(7) - bit_position);
+    let new_bit = !(u8::from(1) << (u8::from(7) - bit_position));
 
-    vec_mask[byte_position as usize] = vec_mask[byte_position as usize] & new_bit;
+    vec_mask[byte_position] = vec_mask[byte_position] & new_bit;
 
     Arc::from(vec_mask)
 }
 
-pub fn is_set_u256(mask: Arc<Vec<u8>>, position: u8) -> bool {
+pub fn is_set_u256(mask: Arc<Vec<u8>>, position: usize) -> bool {
     false
 }
 
@@ -193,8 +193,8 @@ where
             let ptr = self.get_mask_pointer(partial_key);
             let mask = ptr.get();
             let byte = key_bytes[i];
-            if !is_set_u256(mask.clone(), byte) {
-                ptr.set(set_bit_u256(mask, byte));
+            if !is_set_u256(mask.clone(), byte as usize) {
+                ptr.set(set_bit_u256(mask, byte as usize));
             }
         }
     }
