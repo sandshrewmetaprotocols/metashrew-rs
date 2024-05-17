@@ -119,7 +119,14 @@ pub fn unset_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
 }
 
 pub fn is_set_u256(mask: Arc<Vec<u8>>, position: usize) -> bool {
-    false
+    let byte_position: usize = position / 8;
+    let bit_position: u8 = u8::try_from(position % 8).unwrap();
+
+    let vec_mask = Arc::try_unwrap(mask).unwrap();
+
+    let set_bit = u8::from(1) << (u8::from(7) - bit_position);
+
+    vec_mask[byte_position] == vec_mask[byte_position] & set_bit
 }
 
 pub fn binary_search(high: u128, low: u128, for_highest: bool) -> i32 {
