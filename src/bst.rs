@@ -135,6 +135,61 @@ pub fn binary_search(high: u128, low: u128, for_highest: bool) -> i32 {
     pass_down_binary_search!(high, low, for_highest, 256, zero, u128, x, false)
 }
 
+macro_rules! pass_down_bst {
+    ($high: tt, $low: tt, $for_highest: tt, $next: tt, $shift: tt) => {
+        if ($for_highest || $low == 0) && $high != 0 {
+            binary_search_alt::<$next>(ByteView::to_bytes($high), $for_highest)
+        } else {
+            $shift + binary_search_alt::<$next>(ByteView::to_bytes($low), $for_highest)
+        }
+    };
+}
+
+pub fn binary_search_alt<const N: usize>(_word: Vec<u8>, for_highest: bool) -> i32 {
+    match N {
+        128 => {
+            let word: u128 = ByteView::from_bytes(_word);
+            0
+        }
+        64 => {
+            let word: u64 = ByteView::from_bytes(_word);
+            0
+        }
+        32 => {
+            let word: u32 = ByteView::from_bytes(_word);
+            0
+        }
+        16 => {
+            let word: u16 = ByteView::from_bytes(_word);
+            0
+        }
+        8 => {
+            let word: u8 = ByteView::from_bytes(_word);
+            let max: u8 = 0x0f;
+            0
+        }
+        4 => {
+            let max: u8 = u8::try_from(N - 1).unwrap();
+            let word: u8 = ByteView::from_bytes(_word);
+            let high = (word >> 1) & max;
+            let low = word & max;
+            pass_down_bst!(high, low, for_highest, 2, 2)
+        }
+        2 => {
+            let max: u8 = u8::try_from(N - 1).unwrap();
+            let word: u8 = ByteView::from_bytes(_word);
+            let high = (word >> 1) & max;
+            let low = word & max;
+            if (for_highest || low == 0) && high != 0 {
+                0
+            } else {
+                1
+            }
+        }
+        _ => 0,
+    }
+}
+
 pub fn binary_search_inner<T>(word: T, for_highest: bool, size: u16) -> i32
 where
     T: ByteView + Shr + BitAnd + Eq + PartialEq + Copy + Debug,
