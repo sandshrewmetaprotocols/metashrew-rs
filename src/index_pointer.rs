@@ -68,4 +68,15 @@ impl IndexPointer {
             .map(|(i, _x)| self.select_index(i as u32).get_value::<T>())
             .collect::<Vec<T>>()
     }
+    pub fn nullify(&self) {
+        self.set(Arc::from(vec![0]))
+    }
+    pub fn set_or_nullify(&self, v: Arc<Vec<u8>>) {
+        let val = Arc::try_unwrap(v).unwrap();
+        if <usize>::from_bytes(val.clone()) == 0 {
+            self.nullify();
+        } else {
+            self.set(Arc::from(val));
+        }
+    }
 }
