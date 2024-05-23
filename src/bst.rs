@@ -13,21 +13,21 @@ pub struct BST<K> {
     _val: K,
 }
 
-pub fn maskLowerThan(v: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
+pub fn maskLowerThan(v: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
     let mut ar: [u64; 4] = [0, 0, 0, 0];
     ar[0] = u64::from_le_bytes(v.clone().as_slice()[0..8].try_into().unwrap());
     ar[1] = u64::from_le_bytes(v.clone().as_slice()[8..16].try_into().unwrap());
     ar[2] = u64::from_le_bytes(v.clone().as_slice()[16..24].try_into().unwrap());
     ar[3] = u64::from_le_bytes(v.clone().as_slice()[24..32].try_into().unwrap());
 
-    let bit_selected = position % 64;
+    let bit_selected = u64::try_from(position % 64).unwrap();
     let byte_selected = position / 64;
 
-    ar[byte_selected as usize] = ar[byte_selected as usize]
-        & u64::try_from(((1 << bit_selected) - 1) << (64 - bit_selected)).unwrap();
+    ar[byte_selected as usize] =
+        ar[byte_selected as usize] & (((1 << bit_selected) - 1) << (64 - bit_selected));
 
     for i in (byte_selected + 1)..4 {
-        ar[i as usize] = 0;
+        ar[i] = 0;
     }
 
     let _vec = ar
@@ -38,21 +38,20 @@ pub fn maskLowerThan(v: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
     Arc::from(_vec)
 }
 
-pub fn maskGreaterThan(v: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
+pub fn maskGreaterThan(v: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
     let mut ar: [u64; 4] = [0, 0, 0, 0];
     ar[0] = u64::from_le_bytes(v.clone().as_slice()[0..8].try_into().unwrap());
     ar[1] = u64::from_le_bytes(v.clone().as_slice()[8..16].try_into().unwrap());
     ar[2] = u64::from_le_bytes(v.clone().as_slice()[16..24].try_into().unwrap());
     ar[3] = u64::from_le_bytes(v.clone().as_slice()[24..32].try_into().unwrap());
 
-    let bit_selected = position % 64;
+    let bit_selected = u64::try_from(position % 64).unwrap();
     let byte_selected = position / 64;
 
-    ar[byte_selected as usize] = ar[byte_selected as usize]
-        & u64::try_from(((1 << (bit_selected + 1)) - 1) << (63 - bit_selected)).unwrap();
+    ar[byte_selected] = ar[byte_selected] & ((1 << (bit_selected + 1)) - 1 << (63 - bit_selected));
 
     for i in 0..byte_selected {
-        ar[i as usize] = 0;
+        ar[i] = 0;
     }
 
     let _vec = ar
@@ -61,37 +60,6 @@ pub fn maskGreaterThan(v: Arc<Vec<u8>>, position: u8) -> Arc<Vec<u8>> {
         .flatten()
         .collect::<Vec<u8>>();
     Arc::from(_vec)
-}
-
-macro_rules! pass_down_binary_search {
-    ($high: tt, $low: tt, $for_highest: tt, $size: tt, $zero: tt, $t2: tt, $x: tt, $pass: tt) => {
-        if ($for_highest || $low == $zero) || $high != $zero {
-            if $pass {
-                return 0;
-            }
-            binary_search_inner::<$t2>($high, $for_highest, $size / 2)
-        } else {
-            if $pass {
-                return 1;
-            }
-            $x + binary_search_inner::<$t2>($low, $for_highest, $size / 2)
-        }
-    };
-}
-
-macro_rules! pass_down_higher {
-    ($word: tt, $for_highest: tt, $size: tt, $T: tt, $t2: tt) => {{
-        let low: $t2 = $T::try_into($T::from($word & $T::try_from($t2::MAX).unwrap())).unwrap();
-        let shr = $T::try_from(size_of::<$t2>() * 8).unwrap();
-        let high: $t2 = $T::try_into(
-            $T::try_from($T::try_from($word >> shr).unwrap() & $T::try_from($t2::MAX).unwrap())
-                .unwrap(),
-        )
-        .unwrap();
-        let zero = 0 as $t2;
-        let x = i32::from(i32::try_from(size_of::<$t2>()).unwrap() * 8);
-        pass_down_binary_search!(high, low, $for_highest, $size, zero, $t2, x, false)
-    }};
 }
 
 pub fn set_bit_u256(mask: Arc<Vec<u8>>, position: usize) -> Arc<Vec<u8>> {
@@ -129,12 +97,6 @@ pub fn is_set_u256(mask: Arc<Vec<u8>>, position: usize) -> bool {
     vec_mask[byte_position] == vec_mask[byte_position] & set_bit
 }
 
-pub fn binary_search(high: u128, low: u128, for_highest: bool) -> i32 {
-    let x = i32::try_from(size_of::<u128>() * 8).unwrap();
-    let zero = u128::try_from(0).unwrap();
-    pass_down_binary_search!(high, low, for_highest, 256, zero, u128, x, false)
-}
-
 macro_rules! pass_down_bst {
     ($high: tt, $low: tt, $for_highest: tt, $next: tt, $shift: tt) => {
         if ($for_highest || $low == 0) && $high != 0 {
@@ -145,28 +107,52 @@ macro_rules! pass_down_bst {
     };
 }
 
-pub fn binary_search_alt<const N: usize>(_word: Vec<u8>, for_highest: bool) -> i32 {
+pub fn binary_search<const N: usize>(_word: Vec<u8>, for_highest: bool) -> i32 {
     match N {
+        256 => {
+            let word_high: u128 = ByteView::from_bytes(_word.clone()[0..8].to_vec());
+            let word_low: u128 = ByteView::from_bytes(_word.clone()[8..16].to_vec());
+            let shift = (size_of::<u128>() * 8) as i32;
+            pass_down_bst!(word_high, word_low, for_highest, 128, shift)
+        }
         128 => {
             let word: u128 = ByteView::from_bytes(_word);
-            0
+            let max = u64::MAX as u128;
+            let low = (word & max) as u64;
+            let high = ((word >> ((size_of::<u64>() as u128) * 8)) & max) as u64;
+            let shift = (size_of::<u64>() * 8) as i32;
+            pass_down_bst!(high, low, for_highest, 64, shift)
         }
         64 => {
             let word: u64 = ByteView::from_bytes(_word);
-            0
+            let max = u32::MAX as u64;
+            let low = (word & max) as u32;
+            let high = ((word >> ((size_of::<u32>() as u64) * 8)) & max) as u32;
+            let shift = (size_of::<u32>() * 8) as i32;
+            pass_down_bst!(high, low, for_highest, 32, shift)
         }
         32 => {
             let word: u32 = ByteView::from_bytes(_word);
-            0
+            let max = u16::MAX as u32;
+            let low = (word & max) as u16;
+            let high = ((word >> ((size_of::<u16>() as u32) * 8)) & max) as u16;
+            let shift = (size_of::<u16>() * 8) as i32;
+            pass_down_bst!(high, low, for_highest, 16, shift)
         }
         16 => {
             let word: u16 = ByteView::from_bytes(_word);
-            0
+            let max = u8::MAX as u16;
+            let low = (word & max) as u8;
+            let high = ((word >> ((size_of::<u8>() as u16) * 8)) & max) as u8;
+            let shift = (size_of::<u8>() * 8) as i32;
+            pass_down_bst!(high, low, for_highest, 8, shift)
         }
         8 => {
             let word: u8 = ByteView::from_bytes(_word);
             let max: u8 = 0x0f;
-            0
+            let high = (word >> 4) & max;
+            let low = word & max;
+            pass_down_bst!(high, low, for_highest, 4, 4)
         }
         4 => {
             let max: u8 = u8::try_from(N - 1).unwrap();
@@ -185,51 +171,6 @@ pub fn binary_search_alt<const N: usize>(_word: Vec<u8>, for_highest: bool) -> i
             } else {
                 1
             }
-        }
-        _ => 0,
-    }
-}
-
-pub fn binary_search_inner<T>(word: T, for_highest: bool, size: u16) -> i32
-where
-    T: ByteView + Shr + BitAnd + Eq + PartialEq + Copy + Debug,
-    T: From<<T as Shr>::Output>,
-    T: From<<T as BitAnd>::Output>,
-    T: TryInto<u8> + TryInto<u16> + TryInto<u32> + TryInto<u64> + Into<u128>,
-    T: From<u8> + TryFrom<usize> + TryFrom<u16> + TryFrom<u32> + TryFrom<u64> + TryFrom<u128>,
-    <T as TryFrom<usize>>::Error: Debug,
-    <T as TryFrom<u16>>::Error: Debug,
-    <T as TryInto<u16>>::Error: Debug,
-    <T as TryFrom<u8>>::Error: Debug,
-    <T as TryFrom<u32>>::Error: Debug,
-    <T as TryInto<u8>>::Error: Debug,
-    <T as TryInto<u32>>::Error: Debug,
-    <T as TryInto<u64>>::Error: Debug,
-    <T as TryFrom<u64>>::Error: Debug,
-{
-    match size {
-        128 => {
-            pass_down_higher!(word, for_highest, size, T, u64)
-        }
-        64 => {
-            pass_down_higher!(word, for_highest, size, T, u32)
-        }
-        32 => {
-            pass_down_higher!(word, for_highest, size, T, u16)
-        }
-        16 => {
-            pass_down_higher!(word, for_highest, size, T, u8)
-        }
-        2 | 4 | 8 => {
-            let rhs = if size > 4 { 0x0f } else { size - 1 };
-            let high = T::from(
-                T::from(word >> T::try_from(size / 2).unwrap()) & T::try_from(rhs).unwrap(),
-            );
-            let low = T::from(word & T::try_from(rhs).unwrap());
-            let zero = T::from(0);
-            let condition = size == 2;
-            let x = i32::from(size / 2);
-            pass_down_binary_search!(high, low, for_highest, size, zero, T, x, condition)
         }
         _ => 0,
     }
@@ -277,21 +218,11 @@ where
             let this_key = shrink_back(partial_key.clone(), 1);
             let mask = self.get_mask_pointer(this_key.clone()).get();
             if mask.len() > 0 {
-                let derived_mask = maskLowerThan(mask, partial_key[this_key.len()]);
+                let derived_mask = maskLowerThan(mask, partial_key[this_key.len()].into());
                 self.get_mask_pointer(this_key.clone())
                     .set(derived_mask.clone());
                 let derived_mask_value = Arc::try_unwrap(derived_mask).unwrap();
-                let high = u128::from_le_bytes(
-                    derived_mask_value.clone().as_slice()[0..16]
-                        .try_into()
-                        .unwrap(),
-                );
-                let low = u128::from_le_bytes(
-                    derived_mask_value.clone().as_slice()[16..32]
-                        .try_into()
-                        .unwrap(),
-                );
-                let symbol = binary_search(high, low, false);
+                let symbol = binary_search::<256>(derived_mask_value, false);
                 if symbol != -1 {
                     let mut new_key = this_key.clone();
                     new_key.push(symbol.try_into().unwrap());
