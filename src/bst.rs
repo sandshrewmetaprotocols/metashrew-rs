@@ -161,7 +161,7 @@ pub fn binary_search<const N: usize>(_word: Vec<u8>, for_highest: bool) -> i32 {
     }
 }
 
-impl<K: ByteView + Sized + TryFrom<usize>> BST<K>
+impl<K: ByteView + Sized + TryFrom<usize> + Clone> BST<K>
 where
     <K as TryFrom<usize>>::Error: Debug,
 {
@@ -238,12 +238,47 @@ where
         }
         K::from_bytes(vec![0])
     }
-    pub fn seek_greater(start: K) -> K {
+    pub fn seek_greater(&self, start: K) -> K {
+        let mut partial_key = ByteView::to_bytes(start);
+        loop {
+            let this_key = shrink_back(partial_key.clone(), 1);
+            let mask = self.get_mask_pointer(this_key.clone()).get();
+            if mask.len() > 0 {
+                let derived_mask = maskGreaterThan(mask, partial_key[this_key.len()].into());
+                self.get_mask_pointer(this_key.clone())
+                    .set(derived_mask.clone());
+                let derived_mask_value = Arc::try_unwrap(derived_mask).unwrap();
+                let symbol = binary_search::<256>(derived_mask_value, false);
+                if symbol != -1 {
+                    let mut new_key = this_key.clone();
+                    new_key.push(symbol.try_into().unwrap());
+                    return self._find_boundary_from_partial(new_key, false);
+                }
+            }
+
+            partial_key = this_key;
+            if partial_key.len() == 0 {
+                break;
+            }
+        }
         K::from_bytes(vec![0])
     }
-    pub fn set(k: K, v: Vec<u8>) {}
-    pub fn get(k: K) -> Vec<u8> {
-        vec![0]
+    pub fn set(&self, k: K, v: Vec<u8>) {
+        let key = ByteView::to_bytes(k.clone());
+        let key_bytes = usize::from_bytes(key);
+        if usize::from_bytes(v.clone()) == 0 {
+            self.unmark_path(k);
+        } else {
+            self.mark_path(k);
+        }
+        self.ptr
+            .select(&usize::to_bytes(key_bytes))
+            .set(Arc::from(v));
+    }
+    pub fn get(&self, k: K) -> Vec<u8> {
+        let key = ByteView::to_bytes(k.clone());
+        let key_bytes = usize::from_bytes(key);
+        Arc::try_unwrap(self.ptr.select(&usize::to_bytes(key_bytes)).get()).unwrap()
     }
     pub fn nullify(key: K) {}
 }
