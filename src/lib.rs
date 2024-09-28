@@ -8,11 +8,11 @@ use std::panic;
 use std::sync::Arc;
 use protobuf::Message;
 
-mod byte_view;
-mod compat;
-mod index_pointer;
-mod stdio;
-mod proto;
+pub mod byte_view;
+pub mod compat;
+pub mod index_pointer;
+pub mod stdio;
+pub mod proto;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
 use crate::stdio::stdout;
 use crate::proto::metashrew::{KeyValueFlush};
