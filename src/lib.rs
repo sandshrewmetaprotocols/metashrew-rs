@@ -6,16 +6,17 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::panic;
 use std::sync::Arc;
+use protobuf::Message;
 
-mod bst;
 mod byte_view;
 mod compat;
 mod index_pointer;
 mod stdio;
-use crate::bst::BST;
+mod proto;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
 use crate::index_pointer::IndexPointer;
 use crate::stdio::stdout;
+use crate::proto::metashrew::{KeyValueFlush};
 
 #[link(wasm_import_module = "env")]
 extern "C" {
@@ -61,7 +62,9 @@ pub fn flush() {
             to_encode.push((*(CACHE.as_ref().unwrap().get(item).unwrap().clone())).clone());
         }
         TO_FLUSH = Some(Vec::<Arc<Vec<u8>>>::new());
-        let serialized = rlp::encode_list::<Vec<u8>, Vec<u8>>(to_encode.as_slice()).to_vec();
+        let mut buffer = KeyValueFlush::new();
+        buffer.list = to_encode;
+        let serialized = buffer.write_to_bytes().unwrap();
         __flush(to_ptr(&mut to_arraybuffer_layout(Arc::new(serialized.to_vec()))) + 4);
     }
 }
@@ -104,20 +107,3 @@ pub extern "C" fn _start() -> () {
     flush();
 }
 
-#[no_mangle]
-pub extern "C" fn _test() -> () {
-    initialize();
-    let data = input();
-    let mut reader = &data[4..];
-    let bst = BST::<u8>::new(IndexPointer::from_keyword("test"));
-    let block = Block::consensus_decode(&mut reader).unwrap();
-    set(
-        Arc::new(block.block_hash().as_byte_array().to_vec()),
-        Arc::new(data[4..].to_vec()),
-    );
-    println!(
-        "{:x?}",
-        get(Arc::new(block.block_hash().as_byte_array().to_vec()))
-    );
-    flush();
-}
