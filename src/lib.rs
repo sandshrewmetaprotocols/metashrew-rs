@@ -14,7 +14,7 @@ pub mod index_pointer;
 pub mod stdio;
 pub mod proto;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
-use crate::stdio::stdout;
+pub use crate::stdio::stdout;
 use crate::proto::metashrew::{KeyValueFlush};
 
 #[link(wasm_import_module = "env")]

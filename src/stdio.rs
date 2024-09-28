@@ -13,11 +13,9 @@ impl Write for Stdout {
     }
 }
 
-pub fn _stdout() -> Stdout {
+pub fn stdout() -> Stdout {
     Stdout(())
 }
-
-pub(crate) use _stdout as stdout;
 
 #[macro_export]
 macro_rules! println {
