@@ -79,7 +79,7 @@ pub fn input() -> Vec<u8> {
     }
 }
 
-fn initialize() -> () {
+pub fn initialize() -> () {
     unsafe {
         if CACHE.is_none() {
             CACHE = Some(HashMap::<Arc<Vec<u8>>, Arc<Vec<u8>>>::new());
