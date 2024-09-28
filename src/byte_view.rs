@@ -1,9 +1,11 @@
+#[allow(dead_code)]
 pub trait ByteView {
     fn from_bytes(v: Vec<u8>) -> Self;
     fn to_bytes(v: Self) -> Vec<u8>;
     fn maximum() -> Self;
 }
 
+#[allow(dead_code)]
 pub fn shrink_back(b: Vec<u8>, v: usize) -> Vec<u8> {
     let mut _vec = b.clone();
     if b.len() >= v {
@@ -13,6 +15,7 @@ pub fn shrink_back(b: Vec<u8>, v: usize) -> Vec<u8> {
     _vec
 }
 
+#[allow(dead_code)]
 impl ByteView for u8 {
     fn to_bytes(v: u8) -> Vec<u8> {
         Vec::<u8>::from(v.to_le_bytes())
@@ -25,6 +28,7 @@ impl ByteView for u8 {
     }
 }
 
+#[allow(dead_code)]
 impl ByteView for u16 {
     fn to_bytes(v: u16) -> Vec<u8> {
         Vec::<u8>::from(v.to_le_bytes())
@@ -37,6 +41,7 @@ impl ByteView for u16 {
     }
 }
 
+#[allow(dead_code)]
 impl ByteView for u32 {
     fn to_bytes(v: u32) -> Vec<u8> {
         Vec::<u8>::from(v.to_le_bytes())
@@ -49,6 +54,7 @@ impl ByteView for u32 {
     }
 }
 
+#[allow(dead_code)]
 impl ByteView for u64 {
     fn to_bytes(v: u64) -> Vec<u8> {
         Vec::<u8>::from(v.to_le_bytes())
@@ -61,9 +67,9 @@ impl ByteView for u64 {
     }
 }
 
+#[allow(dead_code)]
 impl ByteView for u128 {
     fn to_bytes(v: u128) -> Vec<u8> {
-        let x = v.to_le_bytes();
         Vec::<u8>::from(v.to_le_bytes())
     }
     fn from_bytes(v: Vec<u8>) -> u128 {
@@ -74,6 +80,7 @@ impl ByteView for u128 {
     }
 }
 
+#[allow(dead_code)]
 impl ByteView for usize {
     fn to_bytes(v: usize) -> Vec<u8> {
         Vec::<u8>::from(v.to_le_bytes())

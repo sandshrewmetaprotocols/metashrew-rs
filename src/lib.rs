@@ -14,7 +14,6 @@ mod index_pointer;
 mod stdio;
 mod proto;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
-use crate::index_pointer::IndexPointer;
 use crate::stdio::stdout;
 use crate::proto::metashrew::{KeyValueFlush};
 

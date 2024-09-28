@@ -1,11 +1,11 @@
 use crate::byte_view::ByteView;
-use crate::{flush, get, input, set};
-use std::mem::{size_of, size_of_val};
+use crate::{get, set};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct IndexPointer(Arc<Vec<u8>>);
 
+#[allow(dead_code)]
 impl IndexPointer {
     pub fn from_keyword(keyword: &str) -> IndexPointer {
         IndexPointer::wrap(&keyword.to_string().clone().into_bytes())
