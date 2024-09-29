@@ -1,3 +1,6 @@
+#[cfg(feature = "mock")]
+use wasm_bindgen::prelude::*;
+
 #[allow(unused_imports)]
 use crate::utils::{ptr_to_vec};
 static mut _INPUT: Option<Vec<u8>> = None;
@@ -54,6 +57,12 @@ pub fn __flush(_ptr: i32) -> () {}
 pub fn __get(_ptr: i32, _result: i32) -> () {}
 
 #[cfg(feature = "mock")]
+#[wasm_bindgen(js_namespace = console)]
+extern "C" {
+  fn log(s: &str);
+}
+
+#[cfg(feature = "mock")]
 pub fn __log(ptr: i32) -> () {
-  std::println!("{}", String::from_utf8(ptr_to_vec(ptr)).unwrap());
+  log(format!("{}", String::from_utf8(ptr_to_vec(ptr)).unwrap()).as_str());
 }
