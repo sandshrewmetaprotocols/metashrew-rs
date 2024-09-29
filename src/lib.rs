@@ -27,6 +27,7 @@ static mut TO_FLUSH: Option<Vec<Arc<Vec<u8>>>> = None;
 
 pub fn get(v: Arc<Vec<u8>>) -> Arc<Vec<u8>> {
     unsafe {
+        initialize();
         if CACHE.as_ref().unwrap().contains_key(&v.clone()) {
             return CACHE.as_ref().unwrap().get(&v.clone()).unwrap().clone();
         }
@@ -44,6 +45,7 @@ pub fn get(v: Arc<Vec<u8>>) -> Arc<Vec<u8>> {
 
 pub fn set(k: Arc<Vec<u8>>, v: Arc<Vec<u8>>) {
     unsafe {
+        initialize();
         CACHE.as_mut().unwrap().insert(k.clone(), v.clone());
         TO_FLUSH.as_mut().unwrap().push(k.clone());
     }
@@ -51,6 +53,7 @@ pub fn set(k: Arc<Vec<u8>>, v: Arc<Vec<u8>>) {
 
 pub fn flush() {
     unsafe {
+        initialize();
         let mut to_encode: Vec<Vec<u8>> = Vec::<Vec<u8>>::new();
         for item in TO_FLUSH.as_ref().unwrap() {
             to_encode.push((*item.clone()).clone());
@@ -66,6 +69,7 @@ pub fn flush() {
 
 #[allow(unused_unsafe)]
 pub fn input() -> Vec<u8> {
+  initialize();
   unsafe {
   let length: i32 = __host_len().into();
   let mut buffer = Vec::<u8>::new();
@@ -79,9 +83,15 @@ pub fn input() -> Vec<u8> {
 pub fn initialize() -> () {
     unsafe {
         if CACHE.is_none() {
+            reset();
             CACHE = Some(HashMap::<Arc<Vec<u8>>, Arc<Vec<u8>>>::new());
             panic::set_hook(Box::new(panic_hook));
         }
-        TO_FLUSH = Some(Vec::<Arc<Vec<u8>>>::new());
     }
+}
+
+pub fn reset() -> () {
+  unsafe {
+    TO_FLUSH = Some(Vec::<Arc<Vec<u8>>>::new());
+  }
 }
