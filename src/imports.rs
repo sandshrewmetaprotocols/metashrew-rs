@@ -1,3 +1,5 @@
+#[allow(unused_imports)]
+use crate::utils::{ptr_to_vec};
 static mut _INPUT: Option<Vec<u8>> = None;
 
 pub fn __set_test_input(v: Vec<u8>) {
@@ -18,7 +20,7 @@ extern "C" {
 }
 
 #[cfg(feature = "mock")]
-fn __host_len() -> i32 {
+pub fn __host_len() -> i32 {
     unsafe {
         match _INPUT.as_ref() {
             Some(v) => v.len() as i32,
@@ -28,7 +30,7 @@ fn __host_len() -> i32 {
 }
 
 #[cfg(feature = "mock")]
-fn __load_input(ptr: i32) -> () {
+pub fn __load_input(ptr: i32) -> () {
     unsafe {
         match _INPUT.as_ref() {
             Some(v) => {
@@ -41,7 +43,7 @@ fn __load_input(ptr: i32) -> () {
 }
 
 #[cfg(feature = "mock")]
-pub fn __get_len(ptr: i32) -> i32 {
+pub fn __get_len(_ptr: i32) -> i32 {
   0
 }
 
@@ -53,5 +55,5 @@ pub fn __get(_ptr: i32, _result: i32) -> () {}
 
 #[cfg(feature = "mock")]
 pub fn __log(ptr: i32) -> () {
-  std::println!("{}", String::from_utf8(ptr_to_vec(ptr).to_string()).unwrap());
+  std::println!("{}", String::from_utf8(ptr_to_vec(ptr)).unwrap());
 }
