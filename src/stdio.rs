@@ -2,6 +2,7 @@ use std::sync::Arc;
 //use std::io::{Write, Result};
 use crate::compat::{to_arraybuffer_layout, to_ptr};
 pub use std::fmt::{Error, Write};
+use crate::imports::{__log};
 
 pub struct Stdout(());
 
@@ -26,16 +27,14 @@ macro_rules! println {
   }
 }
 
+/*
 #[cfg(not(test))]
 #[link(wasm_import_module = "env")]
 extern "C" {
     fn __log(ptr: i32);
 }
+*/
 
-#[cfg(test)]
-pub fn __log(ptr: i32) -> () {
-  std::println!("{}", String::from_utf8(ptr_to_vec(ptr).to_string()).unwrap());
-}
 
 pub fn log(v: Arc<Vec<u8>>) -> () {
     unsafe {
