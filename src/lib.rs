@@ -72,11 +72,6 @@ pub fn __get_len(ptr: i32) -> i32 {
 pub fn __flush(_ptr: i32) -> () {}
 
 #[cfg(test)]
-pub fn __log(ptr: i32) -> () {
-  std::println!("{}", String::from_utf8(ptr_to_vec(ptr).to_string()).unwrap());
-}
-
-#[cfg(test)]
 pub fn __get(_ptr: i32, _result: i32) -> () {}
 
 static mut CACHE: Option<HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>>> = None;
