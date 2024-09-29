@@ -1,9 +1,5 @@
 extern crate alloc;
-use bitcoin::blockdata::block::Block;
-use bitcoin::consensus::Decodable;
-use bitcoin::hashes::Hash;
 use std::collections::HashMap;
-use std::fmt::Write;
 use std::panic;
 use std::sync::Arc;
 use protobuf::Message;
@@ -17,6 +13,7 @@ use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
 pub use crate::stdio::stdout;
 use crate::proto::metashrew::{KeyValueFlush};
 
+#[cfg(not(test))]
 #[link(wasm_import_module = "env")]
 extern "C" {
     fn __host_len() -> i32;
@@ -25,6 +22,62 @@ extern "C" {
     fn __get_len(ptr: i32) -> i32;
     fn __load_input(ptr: i32);
 }
+
+pub fn ptr_to_vec(ptr: i32) -> Vec<u8> {
+  unsafe {
+    let len = *((ptr - 4) as usize as *const usize);
+    Vec::<u8>::from_raw_parts(ptr as usize as *mut u8, len, len)
+  }
+}
+
+#[cfg(test)]
+static mut _INPUT: Option<Vec<u8>> = None;
+
+#[cfg(test)]
+pub fn __set_test_input(v: Vec<u8>) {
+  unsafe {
+    _INPUT = Some(v);
+  }
+}
+
+#[cfg(test)]
+fn __host_len() -> i32 {
+    unsafe {
+        match _INPUT.as_ref() {
+            Some(v) => v.len() as i32,
+            None => 0,
+        }
+    }
+}
+
+#[cfg(test)]
+fn __load_input(ptr: i32) -> () {
+    unsafe {
+        match _INPUT.as_ref() {
+            Some(v) => {
+              (&mut std::slice::from_raw_parts_mut(ptr as usize as *mut u8, v.len()))
+                .clone_from_slice(&*v)
+                },
+            None => (),
+        }
+    }
+}
+
+#[cfg(test)]
+pub fn __get_len(ptr: i32) -> i32 {
+  0
+}
+
+#[cfg(test)]
+pub fn __flush(_ptr: i32) -> () {}
+
+#[cfg(test)]
+pub fn __log(ptr: i32) -> () {
+  std::println!("{}", String::from_utf8(ptr_to_vec(ptr).to_string()).unwrap());
+}
+
+#[cfg(test)]
+pub fn __get(_ptr: i32, _result: i32) -> () {}
 
 static mut CACHE: Option<HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>>> = None;
 static mut TO_FLUSH: Option<Vec<Arc<Vec<u8>>>> = None;
@@ -88,21 +141,3 @@ pub fn initialize() -> () {
         TO_FLUSH = Some(Vec::<Arc<Vec<u8>>>::new());
     }
 }
-
-#[no_mangle]
-pub extern "C" fn _start() -> () {
-    initialize();
-    let data = input();
-    let mut reader = &data[4..];
-    let block = Block::consensus_decode(&mut reader).unwrap();
-    set(
-        Arc::new(block.block_hash().as_byte_array().to_vec()),
-        Arc::new(data[4..].to_vec()),
-    );
-    println!(
-        "{:x?}",
-        get(Arc::new(block.block_hash().as_byte_array().to_vec()))
-    );
-    flush();
-}
-
