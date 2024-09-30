@@ -213,4 +213,7 @@ impl AtomicPointer {
       panic!("commit() called without checkpoints in memory");
     }
   }
+  pub fn rollback(&mut self) {
+    self.store.0.lock().unwrap().pop();
+  }
 }
