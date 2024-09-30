@@ -79,4 +79,47 @@ impl IndexPointer {
             self.set(Arc::from(val));
         }
     }
+
+    pub fn pop(&self) -> Arc<Vec<u8>> {
+        let length_key = self.length_key();
+        let length = length_key.get_value::<u32>();
+
+        if length == 0 {
+            return Arc::new(Vec::new()); // Return empty Vec if there are no elements
+        }
+
+        let new_length = length - 1;
+        length_key.set_value::<u32>(new_length); // Update the length
+        self.select_index(new_length).get() // Return the value at the new length
+    }
+
+    pub fn pop_value<T: ByteView>(&self) -> T {
+        let length_key = self.length_key();
+        let length = length_key.get_value::<u32>();
+
+        if length == 0 {
+            return T::from_bytes(Vec::new()); // Return a default value if there are no elements
+        }
+
+        let new_length = length - 1;
+        length_key.set_value::<u32>(new_length); // Update the length
+        self.select_index(new_length).get_value::<T>() // Return the value at the new length
+    }
+
+    pub fn append(&self, v: Arc<Vec<u8>>) {
+        let new_index = self.extend();
+        new_index.set(v);
+    }
+
+    pub fn append_value<T: ByteView>(&self, v: T) {
+        let new_index = self.extend();
+        new_index.set_value(v);
+    }
+
+    pub fn extend(&self) -> IndexPointer {
+        let length_key = self.length_key();
+        let length = length_key.get_value::<u32>();
+        length_key.set_value::<u32>(length + 1);
+        self.select_index(length)
+    }
 }
