@@ -14,7 +14,11 @@ pub fn format_key(v: &Vec<u8>) -> String {
     v.clone()
         .split(|c| *c == 47)
         .map(|bytes| {
-            let r = String::from_utf8(bytes.to_vec());
+            let v = bytes.to_vec();
+            if v.len() == 0 {
+              return "".to_owned();
+            }
+            let r = String::from_utf8(v);
             let is_ascii = match r {
               Ok(ref s) => s.is_ascii(),
               Err(_) => false
