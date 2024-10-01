@@ -23,8 +23,11 @@ pub trait KeyValuePointer {
         ptr.inherits(self);
         ptr
     }
-    fn from_keyword(word: &str) -> Self where Self: Sized {
-      Self::wrap(&word.as_bytes().to_vec())
+    fn from_keyword(word: &str) -> Self
+    where
+        Self: Sized,
+    {
+        Self::wrap(&word.as_bytes().to_vec())
     }
     fn keyword(&self, word: &str) -> Self
     where

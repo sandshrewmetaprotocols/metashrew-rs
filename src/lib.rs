@@ -10,8 +10,8 @@ pub mod imports;
 pub mod index_pointer;
 pub mod proto;
 pub mod stdio;
-pub mod utils;
 pub mod tests;
+pub mod utils;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
 use crate::imports::{__flush, __get, __get_len, __host_len, __load_input};
 use crate::proto::metashrew::KeyValueFlush;
@@ -21,9 +21,7 @@ static mut CACHE: Option<HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>>> = None;
 static mut TO_FLUSH: Option<Vec<Arc<Vec<u8>>>> = None;
 
 pub fn get_cache() -> &'static HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>> {
-  unsafe {
-    CACHE.as_ref().unwrap()
-  }
+    unsafe { CACHE.as_ref().unwrap() }
 }
 
 pub fn get(v: Arc<Vec<u8>>) -> Arc<Vec<u8>> {

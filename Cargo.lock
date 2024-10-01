@@ -408,6 +408,7 @@ dependencies = [
  "bitcoin 0.31.2",
  "bytes",
  "cfg-if",
+ "hex",
  "ordinals",
  "protobuf 3.5.1",
  "protobuf-codegen 3.5.1",
