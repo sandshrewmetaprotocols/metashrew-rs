@@ -82,21 +82,21 @@ pub trait KeyValuePointer {
     where
         Self: Sized,
     {
-        Vec::<u8>::with_capacity(self.length() as usize)
-            .into_iter()
-            .enumerate()
-            .map(|(i, _x)| self.select_index(i as u32).get().clone())
-            .collect::<Vec<Arc<Vec<u8>>>>()
+        let mut result: Vec<Arc<Vec<u8>>> = vec![];
+        for i in 0..self.length() {
+          result.push(self.select_index(i as u32).get().clone());
+        }
+        result
     }
     fn get_list_values<T: ByteView>(&self) -> Vec<T>
     where
         Self: Sized,
     {
-        Vec::<u8>::with_capacity(self.length() as usize)
-            .into_iter()
-            .enumerate()
-            .map(|(i, _x)| self.select_index(i as u32).get_value::<T>())
-            .collect::<Vec<T>>()
+        let mut result: Vec<T> = vec![];
+        for i in 0..self.length() {
+          result.push(self.select_index(i as u32).get_value());
+        }
+        result
     }
     fn nullify(&mut self) {
         self.set(Arc::from(vec![0]))
