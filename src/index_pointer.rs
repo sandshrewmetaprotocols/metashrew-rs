@@ -59,11 +59,11 @@ pub trait KeyValuePointer {
     {
         self.keyword(&"/length".to_string())
     }
-    fn length<T: ByteView>(&self) -> T
+    fn length(&self) -> u32
     where
         Self: Sized,
     {
-        self.length_key().get_value()
+        self.length_key().get_value::<u32>()
     }
     fn select_index(&self, index: u32) -> Self
     where
@@ -76,7 +76,7 @@ pub trait KeyValuePointer {
     where
         Self: Sized,
     {
-        Vec::<u8>::with_capacity(self.length::<usize>())
+        Vec::<u8>::with_capacity(self.length() as usize)
             .into_iter()
             .enumerate()
             .map(|(i, _x)| self.select_index(i as u32).get().clone())
@@ -86,7 +86,7 @@ pub trait KeyValuePointer {
     where
         Self: Sized,
     {
-        Vec::<u8>::with_capacity(self.length::<usize>())
+        Vec::<u8>::with_capacity(self.length() as usize)
             .into_iter()
             .enumerate()
             .map(|(i, _x)| self.select_index(i as u32).get_value::<T>())
