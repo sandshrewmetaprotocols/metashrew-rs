@@ -20,6 +20,12 @@ pub use crate::stdio::stdout;
 static mut CACHE: Option<HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>>> = None;
 static mut TO_FLUSH: Option<Vec<Arc<Vec<u8>>>> = None;
 
+pub fn get_cache() -> &'static HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>> {
+  unsafe {
+    CACHE.as_ref().unwrap()
+  }
+}
+
 pub fn get(v: Arc<Vec<u8>>) -> Arc<Vec<u8>> {
     unsafe {
         initialize();
