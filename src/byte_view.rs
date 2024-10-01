@@ -3,6 +3,7 @@ pub trait ByteView {
     fn from_bytes(v: Vec<u8>) -> Self;
     fn to_bytes(v: Self) -> Vec<u8>;
     fn maximum() -> Self;
+    fn zero() -> Self;
 }
 
 #[allow(dead_code)]
@@ -26,6 +27,9 @@ impl ByteView for u8 {
     fn maximum() -> u8 {
         u8::MAX
     }
+    fn zero() -> u8 {
+        0
+    }
 }
 
 #[allow(dead_code)]
@@ -38,6 +42,9 @@ impl ByteView for u16 {
     }
     fn maximum() -> u16 {
         u16::MAX
+    }
+    fn zero() -> u16 {
+        0
     }
 }
 
@@ -52,6 +59,9 @@ impl ByteView for u32 {
     fn maximum() -> u32 {
         u32::MAX
     }
+    fn zero() -> u32 {
+        0
+    }
 }
 
 #[allow(dead_code)]
@@ -64,6 +74,9 @@ impl ByteView for u64 {
     }
     fn maximum() -> u64 {
         u64::MAX
+    }
+    fn zero() -> u64 {
+        0
     }
 }
 
@@ -78,6 +91,9 @@ impl ByteView for u128 {
     fn maximum() -> u128 {
         u128::MAX
     }
+    fn zero() -> u128 {
+        0
+    }
 }
 
 #[allow(dead_code)]
@@ -91,5 +107,8 @@ impl ByteView for usize {
 
     fn maximum() -> usize {
         usize::MAX
+    }
+    fn zero() -> usize {
+        0
     }
 }

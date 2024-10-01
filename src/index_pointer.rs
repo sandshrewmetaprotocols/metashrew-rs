@@ -1,7 +1,7 @@
 use crate::byte_view::ByteView;
 use crate::{get, set};
-use std::sync::{Mutex, Arc};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone)]
 pub struct IndexPointer(Arc<Vec<u8>>);
@@ -13,14 +13,20 @@ pub trait KeyValuePointer {
     fn set(&mut self, v: Arc<Vec<u8>>);
     fn get(&self) -> Arc<Vec<u8>>;
     fn inherits(&mut self, from: &Self);
-    fn select(&self, word: &Vec<u8>) -> Self where Self: Sized {
+    fn select(&self, word: &Vec<u8>) -> Self
+    where
+        Self: Sized,
+    {
         let mut key = (*self.unwrap()).clone();
         key.extend(word);
         let mut ptr = Self::wrap(&key);
         ptr.inherits(self);
         ptr
     }
-    fn keyword(&self, word: &str) -> Self where Self: Sized {
+    fn keyword(&self, word: &str) -> Self
+    where
+        Self: Sized,
+    {
         let mut key = (*self.unwrap()).clone();
         key.extend(word.to_string().into_bytes());
         let mut ptr = Self::wrap(&key);
@@ -33,30 +39,53 @@ pub trait KeyValuePointer {
     }
 
     fn get_value<T: ByteView>(&self) -> T {
-        T::from_bytes(self.get().as_ref().clone())
+        let cloned = self.get().as_ref().clone();
+        if cloned.is_empty() {
+            T::zero()
+        } else {
+            T::from_bytes(cloned)
+        }
     }
 
-    fn select_value<T: ByteView>(&self, key: T) -> Self where Self: Sized {
+    fn select_value<T: ByteView>(&self, key: T) -> Self
+    where
+        Self: Sized,
+    {
         self.select(T::to_bytes(key).as_ref())
     }
-    fn length_key(&self) -> Self where Self: Sized {
+    fn length_key(&self) -> Self
+    where
+        Self: Sized,
+    {
         self.keyword(&"/length".to_string())
     }
-    fn length<T: ByteView>(&self) -> T where Self: Sized {
+    fn length<T: ByteView>(&self) -> T
+    where
+        Self: Sized,
+    {
         self.length_key().get_value()
     }
-    fn select_index(&self, index: u32) -> Self where Self: Sized {
+    fn select_index(&self, index: u32) -> Self
+    where
+        Self: Sized,
+    {
         self.keyword(&format!("/{}", index))
     }
 
-    fn get_list(&self) -> Vec<Arc<Vec<u8>>> where Self: Sized {
+    fn get_list(&self) -> Vec<Arc<Vec<u8>>>
+    where
+        Self: Sized,
+    {
         Vec::<u8>::with_capacity(self.length::<usize>())
             .into_iter()
             .enumerate()
             .map(|(i, _x)| self.select_index(i as u32).get().clone())
             .collect::<Vec<Arc<Vec<u8>>>>()
     }
-    fn get_list_values<T: ByteView>(&self) -> Vec<T> where Self: Sized {
+    fn get_list_values<T: ByteView>(&self) -> Vec<T>
+    where
+        Self: Sized,
+    {
         Vec::<u8>::with_capacity(self.length::<usize>())
             .into_iter()
             .enumerate()
@@ -75,7 +104,10 @@ pub trait KeyValuePointer {
         }
     }
 
-    fn pop(&self) -> Arc<Vec<u8>> where Self: Sized {
+    fn pop(&self) -> Arc<Vec<u8>>
+    where
+        Self: Sized,
+    {
         let mut length_key = self.length_key();
         let length = length_key.get_value::<u32>();
 
@@ -88,7 +120,10 @@ pub trait KeyValuePointer {
         self.select_index(new_length).get() // Return the value at the new length
     }
 
-    fn pop_value<T: ByteView>(&self) -> T where Self: Sized {
+    fn pop_value<T: ByteView>(&self) -> T
+    where
+        Self: Sized,
+    {
         let mut length_key = self.length_key();
         let length = length_key.get_value::<u32>();
 
@@ -101,17 +136,26 @@ pub trait KeyValuePointer {
         self.select_index(new_length).get_value::<T>() // Return the value at the new length
     }
 
-    fn append(&self, v: Arc<Vec<u8>>) where Self: Sized {
+    fn append(&self, v: Arc<Vec<u8>>)
+    where
+        Self: Sized,
+    {
         let mut new_index = self.extend();
         new_index.set(v);
     }
 
-    fn append_value<T: ByteView>(&self, v: T) where Self: Sized {
+    fn append_value<T: ByteView>(&self, v: T)
+    where
+        Self: Sized,
+    {
         let mut new_index = self.extend();
         new_index.set_value(v);
     }
 
-    fn extend(&self) -> Self where Self: Sized {
+    fn extend(&self) -> Self
+    where
+        Self: Sized,
+    {
         let mut length_key = self.length_key();
         let length = length_key.get_value::<u32>();
         length_key.set_value::<u32>(length + 1);
@@ -140,80 +184,100 @@ impl KeyValuePointer for IndexPointer {
 pub struct IndexCheckpoint(pub HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>>);
 
 impl IndexCheckpoint {
-  fn pipe_to(&self, target: &mut IndexCheckpoint) {
-    self.0.iter().for_each(|(k, v)| {
-      target.0.insert(k.clone(), v.clone());
-    });
-  }
+    fn pipe_to(&self, target: &mut IndexCheckpoint) {
+        self.0.iter().for_each(|(k, v)| {
+            target.0.insert(k.clone(), v.clone());
+        });
+    }
 }
 
 #[derive(Clone)]
 pub struct IndexCheckpointStack(pub Arc<Mutex<Vec<IndexCheckpoint>>>);
 
 impl Default for IndexCheckpointStack {
-  fn default() -> Self {
-    Self(Arc::new(Mutex::new(vec![IndexCheckpoint::default()])))
-  }
+    fn default() -> Self {
+        Self(Arc::new(Mutex::new(vec![IndexCheckpoint::default()])))
+    }
 }
 
 pub struct AtomicPointer {
-  pointer: IndexPointer,
-  store: IndexCheckpointStack
+    pointer: IndexPointer,
+    store: IndexCheckpointStack,
 }
 
 impl KeyValuePointer for AtomicPointer {
-  fn wrap(word: &Vec<u8>) -> Self {
-    AtomicPointer {
-      pointer: IndexPointer::wrap(word),
-      store: IndexCheckpointStack::default()
+    fn wrap(word: &Vec<u8>) -> Self {
+        AtomicPointer {
+            pointer: IndexPointer::wrap(word),
+            store: IndexCheckpointStack::default(),
+        }
     }
-  }
-  fn unwrap(&self) -> Arc<Vec<u8>> {
-    self.pointer.unwrap()
-  }
-  fn inherits(&mut self, from: &Self) {
-    self.store = from.store.clone()
-  }
-  fn set(&mut self, v: Arc<Vec<u8>>) {
-    self.store.0.lock().unwrap().last_mut().unwrap().0.insert(self.unwrap(), v.clone());
-  }
-  fn get(&self) -> Arc<Vec<u8>> {
-    let unwrapped = self.unwrap();
-    match self.store.0.lock().unwrap().iter().rev().find(|map| {
-      map.0.contains_key(&unwrapped)
-    }) {
-      Some(map) => map.0.get(&unwrapped).unwrap().clone(),
-      None => self.pointer.get()
+    fn unwrap(&self) -> Arc<Vec<u8>> {
+        self.pointer.unwrap()
     }
-  }
+    fn inherits(&mut self, from: &Self) {
+        self.store = from.store.clone()
+    }
+    fn set(&mut self, v: Arc<Vec<u8>>) {
+        self.store
+            .0
+            .lock()
+            .unwrap()
+            .last_mut()
+            .unwrap()
+            .0
+            .insert(self.unwrap(), v.clone());
+    }
+    fn get(&self) -> Arc<Vec<u8>> {
+        let unwrapped = self.unwrap();
+        match self
+            .store
+            .0
+            .lock()
+            .unwrap()
+            .iter()
+            .rev()
+            .find(|map| map.0.contains_key(&unwrapped))
+        {
+            Some(map) => map.0.get(&unwrapped).unwrap().clone(),
+            None => self.pointer.get(),
+        }
+    }
 }
 
 impl Default for AtomicPointer {
-  fn default() -> Self {
-    AtomicPointer {
-      pointer: IndexPointer::wrap(&Vec::<u8>::new()),
-      store: IndexCheckpointStack::default()
+    fn default() -> Self {
+        AtomicPointer {
+            pointer: IndexPointer::wrap(&Vec::<u8>::new()),
+            store: IndexCheckpointStack::default(),
+        }
     }
-  }
 }
 
 impl AtomicPointer {
-  pub fn checkpoint(&mut self) {
-    self.store.0.lock().unwrap().push(IndexCheckpoint::default());
-  }
-  pub fn commit(&mut self) {
-    let checkpoints = &mut self.store.0.lock().unwrap();
-    if checkpoints.len() > 1 {
-      checkpoints.pop().unwrap().pipe_to(checkpoints.last_mut().unwrap());
-    } else if checkpoints.len() == 1 {
-      checkpoints.last().unwrap().0.iter().for_each(|(k, v)| {
-        set(k.clone(), v.clone());
-      });
-    } else {
-      panic!("commit() called without checkpoints in memory");
+    pub fn checkpoint(&mut self) {
+        self.store
+            .0
+            .lock()
+            .unwrap()
+            .push(IndexCheckpoint::default());
     }
-  }
-  pub fn rollback(&mut self) {
-    self.store.0.lock().unwrap().pop();
-  }
+    pub fn commit(&mut self) {
+        let checkpoints = &mut self.store.0.lock().unwrap();
+        if checkpoints.len() > 1 {
+            checkpoints
+                .pop()
+                .unwrap()
+                .pipe_to(checkpoints.last_mut().unwrap());
+        } else if checkpoints.len() == 1 {
+            checkpoints.last().unwrap().0.iter().for_each(|(k, v)| {
+                set(k.clone(), v.clone());
+            });
+        } else {
+            panic!("commit() called without checkpoints in memory");
+        }
+    }
+    pub fn rollback(&mut self) {
+        self.store.0.lock().unwrap().pop();
+    }
 }

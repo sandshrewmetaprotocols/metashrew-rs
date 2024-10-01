@@ -2,13 +2,13 @@
 use wasm_bindgen::prelude::*;
 
 #[allow(unused_imports)]
-use crate::utils::{ptr_to_vec};
+use crate::utils::ptr_to_vec;
 static mut _INPUT: Option<Vec<u8>> = None;
 
 pub fn __set_test_input(v: Vec<u8>) {
-  unsafe {
-    _INPUT = Some(v);
-  }
+    unsafe {
+        _INPUT = Some(v);
+    }
 }
 
 #[cfg(not(feature = "mock"))]
@@ -36,10 +36,8 @@ pub fn __host_len() -> i32 {
 pub fn __load_input(ptr: i32) -> () {
     unsafe {
         match _INPUT.as_ref() {
-            Some(v) => {
-              (&mut std::slice::from_raw_parts_mut(ptr as usize as *mut u8, v.len()))
-                .clone_from_slice(&*v)
-                },
+            Some(v) => (&mut std::slice::from_raw_parts_mut(ptr as usize as *mut u8, v.len()))
+                .clone_from_slice(&*v),
             None => (),
         }
     }
@@ -47,7 +45,7 @@ pub fn __load_input(ptr: i32) -> () {
 
 #[cfg(feature = "mock")]
 pub fn __get_len(_ptr: i32) -> i32 {
-  0
+    0
 }
 
 #[cfg(feature = "mock")]
@@ -59,10 +57,10 @@ pub fn __get(_ptr: i32, _result: i32) -> () {}
 #[cfg(feature = "mock")]
 #[wasm_bindgen(js_namespace = console)]
 extern "C" {
-  fn log(s: &str);
+    fn log(s: &str);
 }
 
 #[cfg(feature = "mock")]
 pub fn __log(ptr: i32) -> () {
-  log(format!("{}", String::from_utf8(ptr_to_vec(ptr)).unwrap()).as_str());
+    log(format!("{}", String::from_utf8(ptr_to_vec(ptr)).unwrap()).as_str());
 }

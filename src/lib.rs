@@ -1,26 +1,20 @@
 extern crate alloc;
+use protobuf::Message;
 use std::collections::HashMap;
 use std::panic;
 use std::sync::Arc;
-use protobuf::Message;
 
 pub mod byte_view;
 pub mod compat;
-pub mod index_pointer;
-pub mod stdio;
-pub mod proto;
 pub mod imports;
+pub mod index_pointer;
+pub mod proto;
+pub mod stdio;
 pub mod utils;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
+use crate::imports::{__flush, __get, __get_len, __host_len, __load_input};
+use crate::proto::metashrew::KeyValueFlush;
 pub use crate::stdio::stdout;
-use crate::proto::metashrew::{KeyValueFlush};
-use crate::imports::{
-  __get,
-  __get_len,
-  __flush,
-  __host_len,
-  __load_input
-};
 
 static mut CACHE: Option<HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>>> = None;
 static mut TO_FLUSH: Option<Vec<Arc<Vec<u8>>>> = None;
@@ -69,15 +63,15 @@ pub fn flush() {
 
 #[allow(unused_unsafe)]
 pub fn input() -> Vec<u8> {
-  initialize();
-  unsafe {
-  let length: i32 = __host_len().into();
-  let mut buffer = Vec::<u8>::new();
-  buffer.extend_from_slice(&length.to_le_bytes());
-  buffer.resize((length as usize) + 4, 0);
-  __load_input(to_ptr(&mut buffer) + 4);
-  buffer[4..].to_vec()
-  }
+    initialize();
+    unsafe {
+        let length: i32 = __host_len().into();
+        let mut buffer = Vec::<u8>::new();
+        buffer.extend_from_slice(&length.to_le_bytes());
+        buffer.resize((length as usize) + 4, 0);
+        __load_input(to_ptr(&mut buffer) + 4);
+        buffer[4..].to_vec()
+    }
 }
 
 pub fn initialize() -> () {
@@ -91,7 +85,7 @@ pub fn initialize() -> () {
 }
 
 pub fn reset() -> () {
-  unsafe {
-    TO_FLUSH = Some(Vec::<Arc<Vec<u8>>>::new());
-  }
+    unsafe {
+        TO_FLUSH = Some(Vec::<Arc<Vec<u8>>>::new());
+    }
 }
