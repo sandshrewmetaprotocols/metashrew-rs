@@ -11,6 +11,7 @@ pub mod index_pointer;
 pub mod proto;
 pub mod stdio;
 pub mod utils;
+pub mod tests;
 use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
 use crate::imports::{__flush, __get, __get_len, __host_len, __load_input};
 use crate::proto::metashrew::KeyValueFlush;
