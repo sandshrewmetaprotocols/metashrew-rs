@@ -94,3 +94,10 @@ pub fn reset() -> () {
         TO_FLUSH = Some(Vec::<Arc<Vec<u8>>>::new());
     }
 }
+
+pub fn clear() -> () {
+  unsafe {
+    reset();
+    CACHE = Some(HashMap::<Arc<Vec<u8>>, Arc<Vec<u8>>>::new());
+  }
+}
