@@ -41,7 +41,7 @@ pub trait KeyValuePointer {
     }
 
     fn set_value<T: ByteView>(&mut self, v: T) {
-        self.set(Arc::new(T::to_bytes(v)));
+        self.set(Arc::new(v.to_bytes()));
     }
 
     fn get_value<T: ByteView>(&self) -> T {
@@ -57,7 +57,7 @@ pub trait KeyValuePointer {
     where
         Self: Sized,
     {
-        self.select(T::to_bytes(key).as_ref())
+        self.select(key.to_bytes().as_ref())
     }
     fn length_key(&self) -> Self
     where
@@ -84,7 +84,7 @@ pub trait KeyValuePointer {
     {
         let mut result: Vec<Arc<Vec<u8>>> = vec![];
         for i in 0..self.length() {
-          result.push(self.select_index(i as u32).get().clone());
+            result.push(self.select_index(i as u32).get().clone());
         }
         result
     }
@@ -94,7 +94,7 @@ pub trait KeyValuePointer {
     {
         let mut result: Vec<T> = vec![];
         for i in 0..self.length() {
-          result.push(self.select_index(i as u32).get_value());
+            result.push(self.select_index(i as u32).get_value());
         }
         result
     }
@@ -166,6 +166,16 @@ pub trait KeyValuePointer {
         let length = length_key.get_value::<u32>();
         length_key.set_value::<u32>(length + 1);
         self.select_index(length)
+    }
+    fn prefix(&self, keyword: &str) -> Self
+    where
+        Self: Sized,
+    {
+        let mut val = keyword.to_string().into_bytes();
+        val.extend((*self.unwrap()).clone());
+        let mut ptr = Self::wrap(&val);
+        ptr.inherits(self);
+        ptr
     }
 }
 
