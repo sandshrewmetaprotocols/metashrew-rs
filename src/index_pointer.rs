@@ -286,4 +286,10 @@ impl AtomicPointer {
     pub fn rollback(&mut self) {
         self.store.0.lock().unwrap().pop();
     }
+    pub fn derive(&self, pointer: &IndexPointer) -> Self {
+      AtomicPointer {
+        store: self.store.clone(),
+        pointer: pointer.clone()
+      }
+    }
 }
