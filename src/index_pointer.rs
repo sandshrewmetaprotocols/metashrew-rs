@@ -196,7 +196,7 @@ impl KeyValuePointer for IndexPointer {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct IndexCheckpoint(pub HashMap<Arc<Vec<u8>>, Arc<Vec<u8>>>);
 
 impl IndexCheckpoint {
@@ -207,7 +207,7 @@ impl IndexCheckpoint {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct IndexCheckpointStack(pub Arc<Mutex<Vec<IndexCheckpoint>>>);
 
 impl Default for IndexCheckpointStack {
@@ -216,6 +216,7 @@ impl Default for IndexCheckpointStack {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct AtomicPointer {
     pointer: IndexPointer,
     store: IndexCheckpointStack,
