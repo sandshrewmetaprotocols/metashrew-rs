@@ -3,7 +3,7 @@ use crate::{get, set};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct IndexPointer(Arc<Vec<u8>>);
 
 #[allow(dead_code)]
