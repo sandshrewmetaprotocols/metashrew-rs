@@ -4,15 +4,15 @@ use std::collections::HashMap;
 use std::panic;
 use std::sync::Arc;
 
-pub mod byte_view;
 pub mod compat;
 pub mod imports;
 pub mod index_pointer;
 pub mod proto;
 pub mod stdio;
 pub mod tests;
-pub mod utils;
-use crate::compat::{panic_hook, to_arraybuffer_layout, to_ptr};
+
+use crate::compat::{panic_hook};
+use metashrew_support::compat::{to_arraybuffer_layout, to_ptr};
 use crate::imports::{__flush, __get, __get_len, __host_len, __load_input};
 use crate::proto::metashrew::KeyValueFlush;
 pub use crate::stdio::stdout;
@@ -30,11 +30,11 @@ pub fn get(v: Arc<Vec<u8>>) -> Arc<Vec<u8>> {
         if CACHE.as_ref().unwrap().contains_key(&v.clone()) {
             return CACHE.as_ref().unwrap().get(&v.clone()).unwrap().clone();
         }
-        let mut key = to_arraybuffer_layout(v.clone());
-        let mut value = to_arraybuffer_layout(Arc::new(Vec::<u8>::with_capacity(__get_len(
+        let mut key = to_arraybuffer_layout(v.as_ref());
+        let mut value = to_arraybuffer_layout(Vec::<u8>::with_capacity(__get_len(
             to_ptr(&mut key) + 4,
         )
-            as usize)));
+            as usize));
         __get(to_ptr(&mut key) + 4, to_ptr(&mut value) + 4);
         let result = Arc::<Vec<u8>>::new(value[4..].to_vec());
         CACHE.as_mut().unwrap().insert(v.clone(), result.clone());
@@ -62,7 +62,7 @@ pub fn flush() {
         let mut buffer = KeyValueFlush::new();
         buffer.list = to_encode;
         let serialized = buffer.write_to_bytes().unwrap();
-        __flush(to_ptr(&mut to_arraybuffer_layout(Arc::new(serialized.to_vec()))) + 4);
+        __flush(to_ptr(&mut to_arraybuffer_layout(&serialized.to_vec())) + 4);
     }
 }
 

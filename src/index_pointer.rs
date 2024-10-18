@@ -1,4 +1,4 @@
-use crate::byte_view::ByteView;
+use metashrew_support::byte_view::ByteView;
 use crate::{get, set};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
